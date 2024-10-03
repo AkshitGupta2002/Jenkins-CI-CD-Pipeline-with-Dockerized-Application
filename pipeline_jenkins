@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git 'https://github.com/AkshitGupta2002/Jenkins-CI-CD-Pipeline-with-Dockerized-Application.git'  // Clone your repo with Dockerfile
+            }
+        }
+        stage('SonarQube Analysis') {  // Optional if you're using SonarQube
+            steps {
+                script {
+                    withSonarQubeEnv('tooplate') {
+                        sh 'echo "Running SonarQube analysis..."'
+                    }
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("tooplate:${env.BUILD_ID}")  // Build Docker image
+                }
+            }
+        }
+        stage('Deploy Docker Container') {
+            steps {
+                script {
+                    dockerImage.run("-p 8081:80")  // Run container and map port 8080 to 80
+                }
+            }
+        }
+    }
+}
