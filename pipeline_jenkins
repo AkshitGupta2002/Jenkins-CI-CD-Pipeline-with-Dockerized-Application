@@ -25,7 +25,7 @@ pipeline {
                             -Dsonar.projectKey=Artist-website \
                             -Dsonar.sources=. \
                             -Dsonar.host.url=http://54.169.80.190:9000/ \
-                            -Dsonar.login=squ_b7facbb25097ffd4a05f3762e0865e9a29c87cdd
+                            -Dsonar.login=<your sonarqube token>
                         '''
                     }
                 }
