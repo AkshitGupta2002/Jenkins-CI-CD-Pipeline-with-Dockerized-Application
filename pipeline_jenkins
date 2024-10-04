@@ -1,31 +1,57 @@
 pipeline {
     agent any
+
+    triggers {
+        githubPush()  // Trigger on GitHub push
+    }
+
+    environment {
+        scannerHome = tool 'tooplate'  // Ensure SonarQube Scanner is set up
+    }
+
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/AkshitGupta2002/Jenkins-CI-CD-Pipeline-with-Dockerized-Application.git'  // Clone your repo with Dockerfile
+                git branch: 'main', url: 'https://github.com/AkshitGupta2002/Jenkins-CI-CD-Pipeline-with-Dockerized-Application.git'  // Clone your repo
             }
         }
-        stage('SonarQube Analysis') {  // Optional if you're using SonarQube
+
+        stage('SonarQube Analysis') {
             steps {
                 script {
-                    withSonarQubeEnv('tooplate') {
-                        sh 'echo "Running SonarQube analysis..."'
+                    withSonarQubeEnv('tooplate') {  // Use your SonarQube instance name
+                        sh '''
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=Artist-website \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=http://54.169.80.190:9000/ \
+                            -Dsonar.login=squ_b7facbb25097ffd4a05f3762e0865e9a29c87cdd
+                        '''
                     }
                 }
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("tooplate:${env.BUILD_ID}")  // Build Docker image
+                    // Build Docker image
+                    dockerImage = docker.build("tooplate:${env.BUILD_ID}")
                 }
             }
         }
+
         stage('Deploy Docker Container') {
             steps {
                 script {
-                    dockerImage.run("-p 8081:80")  // Run container and map port 8080 to 80
+                    // Stop and remove all existing containers
+                    sh '''
+                        docker stop $(docker ps -aq) || true  // Stop all running containers, ignore errors if none
+                        docker rm $(docker ps -aq) || true    // Remove all containers, ignore errors if none
+                    '''
+
+                    // Run new container and map port 8081 to 80
+                    dockerImage.run("-p 8081:80 --name tooplate")
                 }
             }
         }
